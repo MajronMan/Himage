@@ -5,88 +5,66 @@
 module Lib
     (
     greeter,
-    run,
-    process,
-    promote,
-    demote,
-    blur
+    reader,
+    writer
     ) where
 
 import System.Environment
 import Data.List
-import Control.Monad
-import System.Environment
-import Data.Word
-import Data.Array.Repa.IO.BMP
-import Data.Array.Repa.IO.Timing
-import Data.Array.Repa                          as A
-import qualified Data.Array.Repa.Repr.Unboxed   as U
-import Data.Array.Repa.Stencil                  as A
-import Data.Array.Repa.Stencil.Dim2             as A
-import Prelude                                  as P
+import Data.Array.Repa hiding ((++))
+import Codec.Picture
 
+data ModifiedFileInfo = ModifiedFileInfo
+                        {
+                          dir :: String,
+                          inName :: String,
+                          inType :: String,
+                          outName :: String,
+                          outType :: String
+                        }
 
-greeter :: IO ()
-greeter = putStrLn "Hello World!"
+instance Show ModifiedFileInfo where
+  show a = dir a ++ " (" ++ inName a++inType a ++ " -> " ++ outName a ++ outType a ++")"
 
+splitFileName' :: String -> String -> (String, String)
+splitFileName' "" acc = (acc,"")
+splitFileName' (x:xs) res = if x == '.'
+                            then (res, xs)
+                            else splitFileName' xs (res++[x])
+splitFileName :: String -> (String, String)
+splitFileName s = splitFileName' s ""
 
--- | Perform the blur.
-run :: Int -> FilePath -> FilePath -> IO ()
-run iterations fileIn fileOut
- = do   arrRGB  <- liftM (either (error . show) id)
-                $  readImageFromBMP fileIn
+greeter :: IO ModifiedFileInfo
+greeter = do
+          putStrLn "Please specify image directory path"
+          directory <- getLine
+          putStrLn "Please specify input image name (with extension)"
+          inFile <- getLine
+          putStrLn "Please specify output image name (with extension)"
+          outFile <- getLine
+          let (inFileName, inExtension) = splitFileName inFile
+          let (outFileName, outExtension) = splitFileName outFile
+          return ModifiedFileInfo {
+                                  dir=directory,
+                                  inName=inFileName,
+                                  inType=inExtension,
+                                  outName=outFileName,
+                                  outType=outExtension
+                                  }
 
-        arrRGB `deepSeqArray` return ()
-        let (arrRed, arrGreen, arrBlue) = U.unzip3 arrRGB
-        let comps                       = [arrRed, arrGreen, arrBlue]
+reader :: ModifiedFileInfo -> IO DynamicImage
+reader info = do
+              let path = dir info ++"/"++ inName info ++ "." ++inType info
+              ret <- readImage path
+              case ret of
+                Left err -> error err
+                Right img ->  return img
 
-        (comps', tElapsed)
-         <- time $ P.mapM (process iterations) comps
-
-        putStr $ prettyTime tElapsed
-
-        let [arrRed', arrGreen', arrBlue'] = comps'
-        writeImageToBMP fileOut
-                (U.zip3 arrRed' arrGreen' arrBlue')
-
-
-process :: Monad m => Int -> Array U DIM2 Word8 -> m (Array U DIM2 Word8)
-process iterations
-        = promote >=> blur iterations >=> demote
-{-# NOINLINE process #-}
-
-
-promote :: Monad m => Array U DIM2 Word8 -> m (Array U DIM2 Double)
-promote arr
- = computeP $ A.map ffs arr
- where  {-# INLINE ffs #-}
-        ffs     :: Word8 -> Double
-        ffs x   =  fromIntegral (fromIntegral x :: Int)
-{-# NOINLINE promote #-}
-
-
-demote  :: Monad m => Array U DIM2 Double -> m (Array U DIM2 Word8)
-demote arr
- = computeP $ A.map ffs arr
-
- where  {-# INLINE ffs #-}
-        ffs     :: Double -> Word8
-        ffs x   =  fromIntegral (truncate x :: Int)
-{-# NOINLINE demote #-}
-
-
-blur    :: Monad m => Int -> Array U DIM2 Double -> m (Array U DIM2 Double)
-blur !iterations arrInit
- = go iterations arrInit
- where  go !0 !arr = return arr
-        go !n !arr
-         = do   arr'    <- computeP
-                         $ A.smap (/ 159)
-                         $ forStencil2 BoundClamp arr
-                           [stencil2|   2  4  5  4  2
-                                        4  9 12  9  4
-                                        5 12 15 12  5
-                                        4  9 12  9  4
-                                        2  4  5  4  2 |]
-                go (n-1) arr'
-{-# NOINLINE blur #-}
+writer :: ModifiedFileInfo -> DynamicImage -> IO()
+writer info image = do
+                    let path = dir info ++"/"++ outName info ++ "." ++ outType info
+                    case outType info of
+                      "png" -> savePngImage (path) image
+                      "bmp" -> saveBmpImage (path) image
+                      "jpg" -> saveJpgImage 100 (path) image
+                    putStrLn ("Image written at: "++path)
