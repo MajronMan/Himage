@@ -1,3 +1,4 @@
+
 {-# LANGUAGE PackageImports, BangPatterns, TemplateHaskell, QuasiQuotes #-}
 {-# OPTIONS -Wall -fno-warn-missing-signatures -fno-warn-incomplete-patterns #-}
 
@@ -6,7 +7,9 @@ module Lib
     (
     greeter,
     reader,
-    writer
+    writer,
+    fromImageToRepa,
+    fromRepaToImage
     ) where
 
 import System.Environment
@@ -68,3 +71,42 @@ writer info image = do
                       "bmp" -> saveBmpImage (path) image
                       "jpg" -> saveJpgImage 100 (path) image
                     putStrLn ("Image written at: "++path)
+
+
+type RGBA8 = (Pixel8,Pixel8,Pixel8,Pixel8)
+
+fromRGBA8 :: PixelRGBA8 -> RGBA8
+fromRGBA8 (PixelRGBA8 r g b alpha) = (r,g,b,alpha)
+
+fromRGB8 :: PixelRGB8 -> RGBA8
+fromRGB8 (PixelRGB8 r g b) = (r,g,b,alpha)
+  where alpha = 255
+
+toRGBA8 :: RGBA8 -> PixelRGBA8
+toRGBA8 (r, g, b, alpha) = (PixelRGBA8 r g b alpha)
+
+fromImage :: (Pixel a) => Image a -> (a -> RGBA8) -> Array D DIM2 RGBA8
+fromImage image f =
+  fromFunction
+  ( Z :. width :. height )
+  (\(Z :. w :. h) -> f $
+   (pixelAt  image  w h))
+  where width = imageWidth image
+        height = imageHeight image
+
+fromImageToRepa :: DynamicImage -> Array D DIM2 RGBA8
+fromImageToRepa (ImageRGBA8 image)  =
+  fromImage image fromRGBA8
+fromImageToRepa (ImageRGB8 image)  =
+  fromImage image fromRGB8
+
+
+fromRepaToImage :: Array D DIM2 RGBA8-> DynamicImage
+fromRepaToImage matrix =
+  ImageRGBA8 (
+    generateImage
+    (\w h -> toRGBA8 $
+    matrix!(Z :. w :. h))
+    width
+    height)
+  where (Z :. width :. height) = extent matrix
