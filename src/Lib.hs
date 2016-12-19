@@ -78,10 +78,6 @@ type RGBA8 = (Pixel8,Pixel8,Pixel8,Pixel8)
 fromRGBA8 :: PixelRGBA8 -> RGBA8
 fromRGBA8 (PixelRGBA8 r g b alpha) = (r,g,b,alpha)
 
-fromRGB8 :: PixelRGB8 -> RGBA8
-fromRGB8 (PixelRGB8 r g b) = (r,g,b,alpha)
-  where alpha = 255
-
 toRGBA8 :: RGBA8 -> PixelRGBA8
 toRGBA8 (r, g, b, alpha) = (PixelRGBA8 r g b alpha)
 
@@ -95,11 +91,7 @@ fromImage image f =
         height = imageHeight image
 
 fromImageToRepa :: DynamicImage -> Array D DIM2 RGBA8
-fromImageToRepa (ImageRGBA8 image)  =
-  fromImage image fromRGBA8
-fromImageToRepa (ImageRGB8 image)  =
-  fromImage image fromRGB8
-
+fromImageToRepa image  = fromImage (convertRGBA8 image) fromRGBA8
 
 fromRepaToImage :: Array D DIM2 RGBA8-> DynamicImage
 fromRepaToImage matrix =
