@@ -15,7 +15,9 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Lib, Filters
+  exposed-modules:     Lib
+  other-modules:       Filters.Effects, Filters.General, Filters.Stencils,
+                       Filters.Types, IO.Arrays, IO.Files
   build-depends:       base >= 4.7 && < 5.0, repa, repa-io,
                        transformers, JuicyPixels
   default-language:    Haskell2010
