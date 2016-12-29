@@ -12,9 +12,17 @@ module Lib
     fromRepaToImage,
     detectEdgeP,
     inversionP,
-    gaussianBlurP
+    gaussianBlurP,
+    setTransparency,
+    grayscale,
+    gaussianBlurOutsideFigureWithFrameP,
+    edgeInsideFigureP,
+    Figure(Circle, Square, Diamond),
+    Point(Point)
     ) where
 
 import IO.Files
 import IO.Arrays
 import Filters.Effects
+import Filters.Types
+import Filters.Figures

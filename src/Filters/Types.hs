@@ -2,13 +2,13 @@
 {-# OPTIONS -Wall -fno-warn-missing-signatures -fno-warn-incomplete-patterns #-}
 
 module Filters.Types
-(
+  (
   RGBA8,
   Filter,
   fromRGBA8,
-  toRGBA8
-)
-where
+  toRGBA8,
+  addRGBA8
+  ) where
 
 import Data.Array.Repa as Repa
 import Codec.Picture
@@ -23,3 +23,6 @@ fromRGBA8 (PixelRGBA8 r g b alpha) = (r,g,b,alpha)
 
 toRGBA8 :: RGBA8 -> PixelRGBA8
 toRGBA8 (r, g, b, alpha) = (PixelRGBA8 r g b alpha)
+
+addRGBA8 :: RGBA8 -> RGBA8 -> RGBA8
+addRGBA8 (r,b,g,alpha) (r',b',g',alpha') = (r+r',b+b',g+g',alpha+alpha')

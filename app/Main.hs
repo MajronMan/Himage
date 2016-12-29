@@ -7,5 +7,5 @@ main = do
   path <- greeter
   img <- reader path
   let matrix = fromImageToRepa img
-  matrixP <- detectEdgeP matrix
+  matrixP <- gaussianBlurOutsideFigureWithFrameP (Circle (Point 256 256) 150 ) matrix
   writer path (fromRepaToImage matrixP)

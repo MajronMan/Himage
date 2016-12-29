@@ -30,6 +30,12 @@ gauss1 =
               2 4 2
               1 2 1  |]
 
+laplace :: Filter
+laplace =
+  [stencil2|  -1 -1 -1
+              -1  8 -1
+              -1 -1 -1 |]
+
 edge :: Filter
 edge =
   [stencil2|  0 1  0

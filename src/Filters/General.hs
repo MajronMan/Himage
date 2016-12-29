@@ -1,9 +1,9 @@
 {-# LANGUAGE PackageImports, BangPatterns, TemplateHaskell, QuasiQuotes #-}
 {-# OPTIONS -Wall -fno-warn-missing-signatures -fno-warn-incomplete-patterns #-}
 module Filters.General
-(
+  (
   setAlpha,
-  setTransparency,
+  desaturationP,
   applyForP,
   applyFilterP,
   applyFor,
@@ -13,7 +13,7 @@ module Filters.General
   toDouble,
   normalizeP,
   normalize
-) where
+  ) where
 
 import Control.Monad
 import Data.Array.Repa as Repa
@@ -29,12 +29,15 @@ setAlpha newAlpha matrix = Repa.map
   (\(r, g, b, _) -> (r,g,b,newAlpha) )
   matrix
 
-setTransparency :: Array D DIM2 RGBA8 -> IO (Array D DIM2 RGBA8)
-setTransparency matrix =  do
-                          putStrLn "Please specify transparency by typing number from 0 to 255."
-                          putStrLn "(It may not be visible unless you had chosen .png extension.)"
-                          alpha <- getLine
-                          return (setAlpha (read alpha) matrix)
+desaturationP :: Array D DIM2 RGBA8 -> IO(Array U DIM2 RGBA8)
+desaturationP matrix =  computeP $ Repa.traverse matrix id luminosity
+
+luminosity :: (DIM2 -> RGBA8) -> DIM2 -> RGBA8
+luminosity f (Z :. i :. j) = (x,x,x,alpha)
+  where
+    x = ceiling $ 0.21 *(fromIntegral r) + 0.71 * (fromIntegral g) + 0.07 * (fromIntegral b)
+    (r,g,b,alpha) = f (Z :. i :. j)
+
 
 --------------------------------------------------------------------------------
 ------------------------------równoległe----------------------------------------
