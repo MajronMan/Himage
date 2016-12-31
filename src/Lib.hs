@@ -18,7 +18,11 @@ module Lib
     gaussianBlurOutsideFigureWithFrameP,
     edgeInsideFigureP,
     Figure(Circle, Square, Diamond),
-    Point(Point)
+    Point(Point),
+    Color(Red, Green, Blue),
+    extractColor,
+    add,
+    sizeDown,
     ) where
 
 import IO.Files
@@ -26,3 +30,4 @@ import IO.Arrays
 import Filters.Effects
 import Filters.Types
 import Filters.Figures
+import Filters.General

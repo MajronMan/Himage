@@ -12,17 +12,79 @@ module Filters.General
   toDoubleP,
   toDouble,
   normalizeP,
-  normalize
+  normalize,
+  extractColor,
+  add,
+  sizeDown,
+  getNeighbours,
+  meanNeighbours,
+  meanPixels,
+  sumPixels
   ) where
 
 import Control.Monad
-import Data.Array.Repa as Repa
+import Data.Array.Repa as Repa hiding ((++))
 import Codec.Picture
 import Data.Array.Repa.Stencil
 import Data.Array.Repa.Stencil.Dim2
 import Filters.Types
 import IO.Arrays
 import Filters.Stencils
+
+add :: Array D DIM2 RGBA8 -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
+add m1 m2 = return $ Repa.append m1 m2
+
+getNeighbours' :: Int -> Int -> Int -> Array D DIM2 RGBA8 -> DIM2 -> [RGBA8]
+getNeighbours' 0 0 _ matrix shape = [index matrix shape]
+getNeighbours' x (-1) width matrix shape = getNeighbours' (x-1) width width matrix shape
+getNeighbours' x y width matrix (Z :. w :. h) =
+  [index matrix (Z :. cw :. ch)] ++
+  getNeighbours' x (y-1) width matrix (Z :. w :. h) where
+    (mw, mh) = (\(Z :. a :. b) -> (a, b)) $ extent matrix
+    cw = min (w+x) (mw-1)
+    ch = min (h+y) (mh-1)
+
+getNeighbours :: Int -> Array D DIM2 RGBA8 -> DIM2 -> [RGBA8]
+getNeighbours 0 _ _ = []
+getNeighbours n matrix shape = getNeighbours' n1 n1 n1 matrix shape where
+  n1 = n-1
+
+sumPixels :: [RGBA8] -> (Int, Int, Int, Int)
+sumPixels [] = (0, 0, 0, 0)
+sumPixels ((r, g, b, a):xs) = (ir+r', ig+g', ib+b', ia+a') where
+  (r', g', b', a') = sumPixels xs
+  ir = fromIntegral r
+  ig = fromIntegral g
+  ib = fromIntegral b
+  ia = fromIntegral a
+
+meanPixels :: Int -> [RGBA8] -> RGBA8
+meanPixels n l = (
+  fromIntegral $ r `div` n2,
+  fromIntegral $ g `div` n2,
+  fromIntegral $ b `div` n2,
+  fromIntegral $ a `div` n2) where
+    (r, g, b, a) = sumPixels l
+    n2 = n*n
+
+meanNeighbours :: Int  -> Array D DIM2 RGBA8 -> DIM2 -> RGBA8
+meanNeighbours i matrix shape = (r , g , b , a ) where
+  (r, g, b, a) = meanPixels i (getNeighbours i matrix (getNth i matrix shape))
+
+getNth :: Int -> Array D DIM2 RGBA8 -> DIM2 -> DIM2
+getNth i matrix (Z :. w :. h) = (Z :. cw :. ch) where
+  (mw, mh) = (\(Z :. a :. b) -> (a, b)) $ extent matrix
+  cw = max 0 (min (i*w) (mw-1))
+  ch = max 0 (min (i*h) (mh-1))
+
+part :: Int -- jaką część macierzy wyciąć
+        -> Array D DIM2 RGBA8 -> DIM2
+part i matrix = f $ extent matrix where
+  f = \(Z :. w :. h)-> (Z :. (w `div` i) :. (h `div` i))
+
+sizeDown :: Int -- ilokrotnie zmniejszyć macierz
+            -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
+sizeDown n matrix = return $ fromFunction (part n matrix) (meanNeighbours n matrix)
 
 setAlpha :: Pixel8 -> Array D DIM2 RGBA8 -> Array D DIM2 RGBA8
 setAlpha newAlpha matrix = Repa.map
@@ -35,9 +97,23 @@ desaturationP matrix =  computeP $ Repa.traverse matrix id luminosity
 luminosity :: (DIM2 -> RGBA8) -> DIM2 -> RGBA8
 luminosity f (Z :. i :. j) = (x,x,x,alpha)
   where
-    x = ceiling $ 0.21 *(fromIntegral r) + 0.71 * (fromIntegral g) + 0.07 * (fromIntegral b)
+    a1 = 0.21 :: Double
+    a2 = 0.71 :: Double
+    a3 = 0.07 :: Double
+    x = ceiling $ a1 *(fromIntegral r) + a2 * (fromIntegral g) + a3 * (fromIntegral b)
     (r,g,b,alpha) = f (Z :. i :. j)
 
+toBlack :: DIM2 -> Array D DIM2 Pixel8
+toBlack shape = fromFunction shape (\(Z :. _ :. _) -> 0)
+
+extractColor :: Color -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
+extractColor color matrix
+  | color == Red = return $ zip4 r n n a
+  | color == Green = return $ zip4 n g n a
+  | color == Blue = return $ zip4 n n b a
+  where
+    n = toBlack (extent matrix)
+    (r, g, b, a) = unzip4 matrix
 
 --------------------------------------------------------------------------------
 ------------------------------równoległe----------------------------------------

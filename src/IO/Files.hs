@@ -20,7 +20,7 @@ data ModifiedFileInfo = ModifiedFileInfo
                         }
 
 instance Show ModifiedFileInfo where
-  show a = dir a ++ " (" ++ inName a++inType a ++ " -> " ++ outName a ++ outType a ++")"
+  show a = dir a ++ " (" ++ inName a++ "." ++inType a ++ " -> " ++ outName a ++ "."++ outType a ++")"
 
 splitFileName' :: String -> String -> (String, String)
 splitFileName' "" acc = (acc,"")
