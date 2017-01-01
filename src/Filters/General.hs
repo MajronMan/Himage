@@ -19,7 +19,9 @@ module Filters.General
   getNeighbours,
   meanNeighbours,
   meanPixels,
-  sumPixels
+  sumPixels,
+  sizeUp,
+  brutalSizeUp
   ) where
 
 import Control.Monad
@@ -85,6 +87,20 @@ part i matrix = f $ extent matrix where
 sizeDown :: Int -- ilokrotnie zmniejszyć macierz
             -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
 sizeDown n matrix = return $ fromFunction (part n matrix) (meanNeighbours n matrix)
+
+extendMatrix :: Int -> Array D DIM2 RGBA8 -> DIM2
+extendMatrix i matrix = f $ extent matrix where
+  f = \(Z :. w :. h) -> (Z :. (w * i) :. (h*i))
+
+brutalSizeUp :: Int -- ilokrotnie zwiększyć macierz
+            -> Array D DIM2 RGBA8 -> Array D DIM2 RGBA8
+brutalSizeUp n matrix = fromFunction (extendMatrix n matrix) f where
+  f = \(Z :. w :. h) -> index matrix (Z :. (w `div` n) :. (h `div` n))
+
+sizeUp :: Int -- ilokrotnie zwiększyć macierz
+            -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
+sizeUp n matrix = return (fromFunction (extendMatrix n matrix) f) where
+  f = \shape -> meanPixels n (getNeighbours n (brutalSizeUp n matrix) shape)
 
 setAlpha :: Pixel8 -> Array D DIM2 RGBA8 -> Array D DIM2 RGBA8
 setAlpha newAlpha matrix = Repa.map

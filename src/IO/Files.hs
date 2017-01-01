@@ -47,6 +47,13 @@ greeter = do
                                   outName=outFileName,
                                   outType=outExtension
                                   }
+-- greeter = return ModifiedFileInfo {
+--                                   dir="/home/majronman/Desktop",
+--                                   inName="u",
+--                                   inType="png",
+--                                   outName="dd",
+--                                   outType="png"
+--                                   }
 
 reader :: ModifiedFileInfo -> IO DynamicImage
 reader info = do

@@ -23,6 +23,8 @@ module Lib
     extractColor,
     add,
     sizeDown,
+    sizeUp,
+    brutalSizeUp
     ) where
 
 import IO.Files

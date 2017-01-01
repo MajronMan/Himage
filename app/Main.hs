@@ -10,8 +10,8 @@ main = do
   --matrixP <- gaussianBlurOutsideFigureWithFrameP (Circle (Point 256 256) 150 ) matrix
   --matrixP <- extractColor Blue matrix
   --matrixP <- add matrix matrix
-  putStrLn "How many times smaller image?"
+  putStrLn "How many times bigger image?"
   line <- getLine
-  let i = read line
-  matrixP <- sizeDown i matrix
+  let i = read line :: Int
+  matrixP <- sizeUp i matrix
   writer path (fromRepaToImage matrixP)
