@@ -6,8 +6,6 @@
 module Lib
     (
     greeter,
-    reader,
-    writer,
     fromImageToRepa,
     fromRepaToImage,
     detectEdgeP,
