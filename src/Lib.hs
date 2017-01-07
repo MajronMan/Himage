@@ -22,7 +22,8 @@ module Lib
     add,
     sizeDown,
     sizeUp,
-    brutalSizeUp
+    brutalSizeUp,
+    overlay
     ) where
 
 import IO.Files

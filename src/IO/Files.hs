@@ -70,7 +70,8 @@ selectFunction (img, mfi) =  do
   \ 5. Size up twice\n \
   \ 6. Size down twice\n \
   \ 7. Detect edge inside of a square\n \
-  \ 8. Gaussian blur outside of a circle\n"
+  \ 8. Gaussian blur outside of a circle\n \
+  \ 9. Overlay two images\n"
   option <- getLine
   let function = case option of
                     "1" -> gaussianBlurP
@@ -80,9 +81,21 @@ selectFunction (img, mfi) =  do
                     "5" -> sizeUp 2
                     "6" -> sizeDown 2
                     "7" -> edgeInsideFigureP (Square (Point 256 256) 150)
-                    _ ->  gaussianBlurOutsideFigureWithFrameP (Circle (Point 256 256) 150 )
-  modifiedImage <- function $ fromImageToRepa img
-  return (fromRepaToImage modifiedImage, mfi)
+                    "8" ->  gaussianBlurOutsideFigureWithFrameP (Circle (Point 256 256) 150 )
+                    _ -> sizeUp 2
+  if option == "9" then do
+    putStrLn "Insert name (with extension) of the second image"
+    name <- getLine
+    secondImage <- readImage $ dir mfi ++ "/" ++ name
+    case secondImage of
+      Left err -> do
+                  error "No such image"
+      Right properImage -> do
+                           modifiedImage <- overlay (fromImageToRepa img) (fromImageToRepa properImage)
+                           return (fromRepaToImage modifiedImage, mfi)
+  else do
+    modifiedImage <- function $ fromImageToRepa img
+    return (fromRepaToImage modifiedImage, mfi)
 
 writer :: (DynamicImage, ModifiedFileInfo) -> IO()
 writer (image, info) = do

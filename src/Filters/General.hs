@@ -21,7 +21,8 @@ module Filters.General
   meanPixels,
   sumPixels,
   sizeUp,
-  brutalSizeUp
+  brutalSizeUp,
+  overlay
   ) where
 
 import Control.Monad
@@ -191,3 +192,21 @@ applyFilter f matrix = zip4 rArray' gArray' bArray' alphaArray
 applyFor :: Int -> Filter -> Array D DIM2 RGBA8 -> Array D DIM2 RGBA8
 applyFor 0 _ matrix = matrix
 applyFor n f matrix =  applyFor (n-1) f . applyFilter f $ matrix
+
+zipWithRGBA8 :: RGBA8 -> RGBA8 -> (Pixel8 -> Pixel8 -> Pixel8) -> RGBA8
+zipWithRGBA8 (r1, g1, b1, a1) (r2, g2, b2, a2) f = (f r1 r2, f g1 g2, f b1 b2, f a1 a2)
+
+overlayPixel :: Pixel8 -> Pixel8 -> Pixel8
+overlayPixel p1 p2
+  | a < 0.5 = round (2*a*b*255)  :: Pixel8
+  | otherwise = round ((1-2*(1-a)*(1-b))*255) :: Pixel8
+  where
+    a = fromIntegral p1 / 255 :: Double
+    b = fromIntegral p2 / 255 :: Double
+
+overlay :: Array D DIM2 RGBA8 -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
+overlay base top = return $ fromFunction (extent base) f where
+  (Z:. tw :. th) = extent top
+  f = \(Z :. w :. h) -> if and [tw > w, th > h]
+    then zipWithRGBA8 (base ! (Z:.w:.h)) (top ! (Z:.w:.h)) overlayPixel
+    else base ! (Z:.w:.h)
