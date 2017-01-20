@@ -23,7 +23,9 @@ module Lib
     sizeDown,
     sizeUp,
     brutalSizeUp,
-    overlay
+    overlay,
+    zip4,
+    unzip4
     ) where
 
 import IO.Files

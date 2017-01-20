@@ -14,6 +14,7 @@ import Data.Array.Repa.Stencil
 import Data.Array.Repa.Stencil.Dim2
 import Filters.Types
 
+
 zip4 :: Array D DIM2 a -> Array D DIM2 a -> Array D DIM2 a -> Array D DIM2 a -> Array D DIM2 (a,a,a,a)
 zip4 m1 m2 m3 m4 = fromFunction
   (extent m1)
