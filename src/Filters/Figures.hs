@@ -22,6 +22,8 @@ import Data.Array.Repa as Repa hiding ((++))
 
 import Filters.Types
 
+-- |
+-- Point in two dimensional space
 data Point = Point {x::Int, y::Int}
 
 instance Show Point where
@@ -40,15 +42,21 @@ instance Show Figure where
   show (Square p r) = "Circle, center = " ++ show p ++ ", radius = " ++ show r
   show (Diamond p r) = "Circle, center = " ++ show p ++ ", radius = " ++ show r
 
---odległość od środka figury do punktu w odpowiedniej normie
+-- |
+-- distance from the middle of the figure in right norm (euclid, city or maximal)
 norm:: Figure ->  Point -> Double
 norm (Circle c r) p = sqrt (fromIntegral (((x p) - (x c))^2 + ((y p) - (y c))^2))
 norm (Square c r) p = fromIntegral (max (abs ((x p) - (x c))) (abs ((y p) - (y c))))
 norm (Diamond c r) p = fromIntegral (abs ((x p) - (x c)) + abs ((y p) - (y c)))
 
+-- |
+-- Checks if point is inside the figure
 inside:: Figure -> Point -> Bool
 inside figure point = (norm figure point <= radius figure)
 
+
+-- |
+-- Checks if point is outside the figure
 outside:: Figure -> Point -> Bool
 outside figure point = not $ inside figure point
 
@@ -61,7 +69,9 @@ enlarge (Circle c r) d = (Circle c (r+d))
 enlarge (Diamond c r) d = (Diamond c (r+d))
 enlarge (Square c r) d = (Square c (r+d))
 
---Przyjmuje funkcje inside lub outside i zwraca odpowiednio wnętrze figury lub zewnętrze, reszta czarna i przezroczysta
+-- |
+-- Takes a figure and function (inside or outside) and returns array that's black and transparent on 
+-- inside or outside fiven figure and unchanged on the other side
 cutFigure :: Figure -> (Figure->Point->Bool)-> Array D DIM2 RGBA8 -> Array D DIM2 RGBA8
 cutFigure figure fun matrix =
   fromFunction
@@ -72,10 +82,11 @@ cutFigure figure fun matrix =
                             then matrix!(Z :. w :. h)
                             else (0,0,0,0))
 
---wyodrębnia podaną figurę i aplikuje jeden filtr wewnątrz, a drugi na zewnątrz
+-- |
+-- Cuts figure and applies one filter on the inside, other on the outside
 applyPartiallyInFigureP :: Figure
-                          -> (Array D DIM2 RGBA8->IO(Array D DIM2 RGBA8)) --filtr wewnętrzny
-                          -> (Array D DIM2 RGBA8->IO(Array D DIM2 RGBA8)) --filtr zewnętrzny
+                          -> (Array D DIM2 RGBA8->IO(Array D DIM2 RGBA8)) -- ^ inside filter
+                          -> (Array D DIM2 RGBA8->IO(Array D DIM2 RGBA8)) -- ^ outside filter
                           -> Array D DIM2 RGBA8
                           -> IO(Array D DIM2 RGBA8)
 applyPartiallyInFigureP figure innerFun outterFun matrix =

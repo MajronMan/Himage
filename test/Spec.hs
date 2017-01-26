@@ -7,6 +7,7 @@ where
   import Data.Array.Repa
   import Codec.Picture
   import Filters.Figures
+  import IO.Files
 
   type Arr = Array D DIM2 Int
   type ArrVis = Array U DIM2 Int
@@ -27,6 +28,7 @@ where
   tester (a1, a2, a3, a4) = compare4 res1 res2 where
     res1 = (a1, a2, a3, a4)
     res2 = conv4(unziptest (ziptest (delay a1) (delay a2) (delay a3) (delay a4)))
+
 
 
 
@@ -60,3 +62,13 @@ where
         testerSquare
       it "test for diamonds" . property $
         testerDiamond
+      -- it "tests zip" . property $
+      --   tester
+
+    describe "Unit tests" $ do
+      it "Splits files" $ do
+        splitFileName "costam.png" `shouldBe` ("costam", "png")
+        splitFileName "costam.png.jpg" `shouldBe` ("costam", "png.jpg")
+        splitFileName "costam.pnadgdgadgag" `shouldBe` ("costam", "pnadgdgadgag")
+        splitFileName ".costam.png" `shouldBe` ("", "costam.png")
+        splitFileName "..." `shouldBe` ("", "..")
