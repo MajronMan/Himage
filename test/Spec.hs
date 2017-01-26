@@ -6,6 +6,7 @@ where
   import Data.Typeable
   import Data.Array.Repa
   import Codec.Picture
+  import Filters.Figures
 
   type Arr = Array D DIM2 Int
   type ArrVis = Array U DIM2 Int
@@ -28,8 +29,20 @@ where
     res2 = conv4(unziptest (ziptest (delay a1) (delay a2) (delay a3) (delay a4)))
 
 
+
+  testerCircle :: Int ->Int ->Double ->Int  -> Int -> Bool
+  testerCircle a b c d e  =  and [(norm figure point == 0), (center figure  == point)]
+    where figure = (Circle (Point a b) c )
+          point = (Point d e)
+
+  --instance Arbitrary Point where
+    --arbitrary = (Point (arbitrary x) (arbitrary y))
+
+--  instance Arbitrary Figure where
+  --  arbitrary = (Circle (Point (arbitrary x) (arbitrary y)) (arbitrary r))
+
   main :: IO ()
   main = hspec $ do
-    describe "Zip4 and unzip4" $ do
-      it "zips" . property $
-        tester
+    describe "|p-q| = 0 <=> p=q" $ do
+      it "bum" . property $
+        testerCircle

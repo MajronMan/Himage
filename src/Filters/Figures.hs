@@ -7,25 +7,38 @@ module Filters.Figures
     (
     Point(Point),
     Figure(Circle,Square,Diamond),
+    center,
     radius,
     inside,
     outside,
+    norm,
     enlarge,
     applyPartiallyInFigureP,
     addFrame
     ) where
 
 import Control.Monad
-import Data.Array.Repa as Repa
+import Data.Array.Repa as Repa hiding ((++))
 
 import Filters.Types
 
 data Point = Point {x::Int, y::Int}
 
+instance Show Point where
+  show (Point x y) = "x = " ++ (show x) ++ " y = " ++ (show y)
+
+instance Eq Point where
+  (==) (Point x1 y1) (Point x2 y2) = and [x1==x2, y1==y2]
+
 data Figure =
     Circle {center::Point, radius::Double}
   | Square {center::Point, radius::Double} --promień to połowa długości przekątnej
   | Diamond {center::Point, radius::Double} --promień to połowa długości przekątnej
+
+instance Show Figure where
+  show (Circle p r) = "Circle, center = " ++ show p ++ ", radius = " ++ show r
+  show (Square p r) = "Circle, center = " ++ show p ++ ", radius = " ++ show r
+  show (Diamond p r) = "Circle, center = " ++ show p ++ ", radius = " ++ show r
 
 --odległość od środka figury do punktu w odpowiedniej normie
 norm:: Figure ->  Point -> Double
