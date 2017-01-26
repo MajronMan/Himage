@@ -3,7 +3,8 @@ module IO.Arrays
   zip4,
   unzip4,
   fromImageToRepa,
-  fromRepaToImage
+  fromRepaToImage,
+  RGBA8
 ) where
 
 import System.Environment

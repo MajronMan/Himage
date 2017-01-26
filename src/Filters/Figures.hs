@@ -10,6 +10,7 @@ module Filters.Figures
     center,
     radius,
     inside,
+    insideFrame,
     outside,
     norm,
     enlarge,
@@ -26,6 +27,7 @@ data Point = Point {x::Int, y::Int}
 
 instance Show Point where
   show (Point x y) = "x = " ++ (show x) ++ " y = " ++ (show y)
+
 
 instance Eq Point where
   (==) (Point x1 y1) (Point x2 y2) = and [x1==x2, y1==y2]
@@ -47,19 +49,24 @@ norm (Square c r) p = fromIntegral (max (abs ((x p) - (x c))) (abs ((y p) - (y c
 norm (Diamond c r) p = fromIntegral (abs ((x p) - (x c)) + abs ((y p) - (y c)))
 
 inside:: Figure -> Point -> Bool
-inside figure point = (norm figure point <= radius figure)
+inside figure point = (norm figure point <= ( radius  figure))
 
 outside:: Figure -> Point -> Bool
 outside figure point = not $ inside figure point
 
 insideFrame:: Figure -> Double -> Point -> Bool
 insideFrame figure frameWidth point =
-  (outside figure point) && (inside (enlarge figure frameWidth) point)
+  (outside figure point) && (inside (enlarge figure ( frameWidth)) point)
 
 enlarge:: Figure -> Double -> Figure
 enlarge (Circle c r) d = (Circle c (r+d))
 enlarge (Diamond c r) d = (Diamond c (r+d))
 enlarge (Square c r) d = (Square c (r+d))
+
+doubleAbs :: Double -> Double
+doubleAbs a
+  | a < 0 = -a
+  | otherwise = a
 
 --Przyjmuje funkcje inside lub outside i zwraca odpowiednio wnętrze figury lub zewnętrze, reszta czarna i przezroczysta
 cutFigure :: Figure -> (Figure->Point->Bool)-> Array D DIM2 RGBA8 -> Array D DIM2 RGBA8
