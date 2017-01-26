@@ -15,13 +15,15 @@ import Data.Array.Repa.Stencil
 import Data.Array.Repa.Stencil.Dim2
 import Filters.Types
 
-
+-- |
+-- Like zip, but for quadruples
 zip4 :: Array D DIM2 a -> Array D DIM2 a -> Array D DIM2 a -> Array D DIM2 a -> Array D DIM2 (a,a,a,a)
 zip4 m1 m2 m3 m4 = fromFunction
   (extent m1)
   (\(Z:. w :. h) -> (m1!(Z:. w :. h) , m2!(Z:. w :. h) , m3!(Z:. w :. h) , m4!(Z:. w :. h)))
 
-
+-- |
+-- Like unzip, but for quadruples
 unzip4 :: Array D DIM2 (a,a,a,a) -> (Array D DIM2 a, Array D DIM2 a, Array D DIM2 a, Array D DIM2 a)
 unzip4 matrix = (m1, m2, m3, m4)
   where m1 = unzip4' (\(a,b,c,d) -> a)
@@ -32,6 +34,7 @@ unzip4 matrix = (m1, m2, m3, m4)
           (extent matrix)
           (\(Z:. w:. h) -> f (matrix!(Z:. w:. h)))
 
+
 fromImage :: (Pixel a) => Image a -> (a -> RGBA8) -> Array D DIM2 RGBA8
 fromImage image f =
   fromFunction
@@ -41,6 +44,8 @@ fromImage image f =
   where width = imageWidth image
         height = imageHeight image
 
+-- |
+-- Convert an Image to REPA array representation
 fromImageToRepa :: DynamicImage -> Array D DIM2 RGBA8
 fromImageToRepa image  = fromImage (convertRGBA8 image) fromRGBA8
 

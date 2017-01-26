@@ -34,6 +34,8 @@ import Filters.Types
 import IO.Arrays
 import Filters.Stencils
 
+-- |
+-- Alias for Repa.append
 add :: Array D DIM2 RGBA8 -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
 add m1 m2 = return $ Repa.append m1 m2
 
@@ -46,12 +48,15 @@ getNeighbours' x y width matrix (Z :. w :. h) =
     (mw, mh) = (\(Z :. a :. b) -> (a, b)) $ extent matrix
     cw = min (w+x) (mw-1)
     ch = min (h+y) (mh-1)
-
+-- |
+-- Returns neighbours of given pixel 
 getNeighbours :: Int -> Array D DIM2 RGBA8 -> DIM2 -> [RGBA8]
 getNeighbours 0 _ _ = []
 getNeighbours n matrix shape = getNeighbours' n1 n1 n1 matrix shape where
   n1 = n-1
 
+-- |
+-- Returns quadruple containing summed components of pixels
 sumPixels :: [RGBA8] -> (Int, Int, Int, Int)
 sumPixels [] = (0, 0, 0, 0)
 sumPixels ((r, g, b, a):xs) = (ir+r', ig+g', ib+b', ia+a') where
@@ -61,6 +66,8 @@ sumPixels ((r, g, b, a):xs) = (ir+r', ig+g', ib+b', ia+a') where
   ib = fromIntegral b
   ia = fromIntegral a
 
+-- |
+-- Count an average of a group of pixels
 meanPixels :: Int -> [RGBA8] -> RGBA8
 meanPixels n l = (
   fromIntegral $ r `div` n2,
@@ -70,39 +77,55 @@ meanPixels n l = (
     (r, g, b, a) = sumPixels l
     n2 = n*n
 
+-- |
+-- Calculate average values from neighbours of the given pixel
 meanNeighbours :: Int  -> Array D DIM2 RGBA8 -> DIM2 -> RGBA8
 meanNeighbours i matrix shape = (r , g , b , a ) where
   (r, g, b, a) = meanPixels i (getNeighbours i matrix (getNth i matrix shape))
 
+-- |
+-- Return nth pixel from given array
 getNth :: Int -> Array D DIM2 RGBA8 -> DIM2 -> DIM2
 getNth i matrix (Z :. w :. h) = (Z :. cw :. ch) where
   (mw, mh) = (\(Z :. a :. b) -> (a, b)) $ extent matrix
   cw = max 0 (min (i*w) (mw-1))
   ch = max 0 (min (i*h) (mh-1))
 
-part :: Int -- jaką część macierzy wyciąć
+-- |
+-- Takes an array and returns just a part of it
+part :: Int -- ^ how much to cut
         -> Array D DIM2 RGBA8 -> DIM2
 part i matrix = f $ extent matrix where
   f = \(Z :. w :. h)-> (Z :. (w `div` i) :. (h `div` i))
 
-sizeDown :: Int -- ilokrotnie zmniejszyć macierz
+-- |
+-- Resize array n times
+sizeDown :: Int -- ^ how many times smaller
             -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
 sizeDown n matrix = return $ fromFunction (part n matrix) (meanNeighbours n matrix)
 
+-- |
+-- Return shape describing n times bigger array
 extendMatrix :: Int -> Array D DIM2 RGBA8 -> DIM2
 extendMatrix i matrix = f $ extent matrix where
   f = \(Z :. w :. h) -> (Z :. (w * i) :. (h*i))
 
+-- |
+-- Increase size of array by simply copying pixels
 brutalSizeUp :: Int -- ilokrotnie zwiększyć macierz
             -> Array D DIM2 RGBA8 -> Array D DIM2 RGBA8
 brutalSizeUp n matrix = fromFunction (extendMatrix n matrix) f where
   f = \(Z :. w :. h) -> index matrix (Z :. (w `div` n) :. (h `div` n))
 
+-- |
+-- Increase size of array using bilinear interpolation
 sizeUp :: Int -- ilokrotnie zwiększyć macierz
             -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
 sizeUp n matrix = return (fromFunction (extendMatrix n matrix) f) where
   f = \shape -> meanPixels n (getNeighbours n (brutalSizeUp n matrix) shape)
 
+-- |
+-- Change transparency of all pixels
 setAlpha :: Pixel8 -> Array D DIM2 RGBA8 -> Array D DIM2 RGBA8
 setAlpha newAlpha matrix = Repa.map
   (\(r, g, b, _) -> (r,g,b,newAlpha) )
@@ -120,9 +143,13 @@ luminosity f (Z :. i :. j) = (x,x,x,alpha)
     x = ceiling $ a1 *(fromIntegral r) + a2 * (fromIntegral g) + a3 * (fromIntegral b)
     (r,g,b,alpha) = f (Z :. i :. j)
 
+-- |
+-- Create a black image of given shape
 toBlack :: DIM2 -> Array D DIM2 Pixel8
 toBlack shape = fromFunction shape (\(Z :. _ :. _) -> 0)
 
+-- |
+-- Set components of each pixel to 0 except for given colour
 extractColor :: Color -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
 extractColor color matrix
   | color == Red = return $ zip4 r n n a
@@ -193,9 +220,13 @@ applyFor :: Int -> Filter -> Array D DIM2 RGBA8 -> Array D DIM2 RGBA8
 applyFor 0 _ matrix = matrix
 applyFor n f matrix =  applyFor (n-1) f . applyFilter f $ matrix
 
+-- | 
+-- Like zipWith, but for pixels
 zipWithRGBA8 :: RGBA8 -> RGBA8 -> (Pixel8 -> Pixel8 -> Pixel8) -> RGBA8
 zipWithRGBA8 (r1, g1, b1, a1) (r2, g2, b2, a2) f = (f r1 r2, f g1 g2, f b1 b2, f a1 a2)
 
+-- |
+-- Calculate sum of two pixels using "overlay" method 
 overlayPixel :: Pixel8 -> Pixel8 -> Pixel8
 overlayPixel p1 p2
   | a < 0.5 = round (2*a*b*255)  :: Pixel8
@@ -204,6 +235,8 @@ overlayPixel p1 p2
     a = fromIntegral p1 / 255 :: Double
     b = fromIntegral p2 / 255 :: Double
 
+-- |
+-- Use overlay function to add two images
 overlay :: Array D DIM2 RGBA8 -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
 overlay base top = return $ fromFunction (extent base) f where
   (Z:. tw :. th) = extent top

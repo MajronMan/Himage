@@ -8,7 +8,7 @@ where
   import Codec.Picture
   import Filters.Figures
   import IO.Arrays
-
+  import IO.Files
 
   type FigureTester = (Point -> Double -> Figure) -> Int ->Int ->Double ->Int  -> Int -> Bool
 
@@ -34,30 +34,38 @@ where
   main :: IO ()
   main = hspec $ do
     describe "|p-q| = 0 <=> p=q" $ do
-      it "circle norm" . property $
+      it "calculate circle norm" . property $
         normTester Circle
-      it "square norm" . property $
+      it "calculate square norm" . property $
         normTester Square
-      it "diamond norm" . property $
+      it "calculate diamond norm" . property $
         normTester Diamond
 
     describe "(!inside => ouotside) and (!outside => inside)" $ do
-      it "inside/outside circle" . property $
+      it "decide if inside or outside circle" . property $
         insideOutsideTester Circle
-      it "inside/outside square" . property $
+      it "decide  if inside or outside square" . property $
         insideOutsideTester Square
-      it "inside/outside diamond" . property  $
+      it "decide if inside or outside diamond" . property  $
         insideOutsideTester Diamond
 
     describe "point can't be inside frame with width=0 " $ do
-      it "inside circle noframe" . property $
+      it "can't be inside circle nofram" . property $
         noFrameTester Circle
-      it "inside squares noframe" . property $
+      it "can't be inside squares noframe" . property $
         noFrameTester Square
-      it "inside diamonds noframe" . property  $
+      it "can't be inside diamonds noframe" . property  $
         noFrameTester Diamond
 
-    describe "conversion to and from image (Unit test)"  $
+    describe "Unit tests" $ do
+      it "Splits files" $ do
+        splitFileName "costam.png" `shouldBe` ("costam", "png")
+        splitFileName "costam.png.jpg" `shouldBe` ("costam", "png.jpg")
+        splitFileName "costam.pnadgdgadgag" `shouldBe` ("costam", "pnadgdgadgag")
+        splitFileName ".costam.png" `shouldBe` ("", "costam.png")
+        splitFileName "..." `shouldBe` ("", "..")
+
+    describe "conversion beetwen image representations (Unit tests)"  $
       it "convert" $ do
         imageRepaTester function1 `shouldBe` True
         imageRepaTester function2 `shouldBe` True

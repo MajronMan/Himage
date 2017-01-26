@@ -17,9 +17,10 @@ library
   hs-source-dirs:      src
   exposed-modules:     Lib,
                        Filters.Figures,
-                       IO.Arrays
+                       IO.Arrays,
+                       IO.Files
   other-modules:       Filters.Effects, Filters.General, Filters.Stencils,
-                       Filters.Types, IO.Files
+                       Filters.Types
   build-depends:       base >= 4.7 && < 5.0, repa, repa-io,
                        transformers, JuicyPixels
   default-language:    Haskell2010

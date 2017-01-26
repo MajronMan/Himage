@@ -1,6 +1,7 @@
 module IO.Files
     (
-    greeter
+    greeter,
+    splitFileName
     ) where
 
 import System.Environment
@@ -32,9 +33,13 @@ splitFileName' (x:xs) res = if x == '.'
                             then (res, xs)
                             else splitFileName' xs (res++[x])
 
+-- |
+-- Find firs dot and change name.extension to (name, extension)
 splitFileName :: String -> (String, String)
 splitFileName s = splitFileName' s ""
 
+-- |
+-- Handle user input to read a file
 inputFile :: IO ((DynamicImage, ModifiedFileInfo))
 inputFile = do
             putStrLn "Please specify image directory path"
@@ -60,6 +65,8 @@ inputFile = do
                           inputFile
               Right img ->  return (img, mfInfo)
 
+-- |
+-- Handle user input to use one of possible functions
 selectFunction :: (DynamicImage, ModifiedFileInfo) -> IO ((DynamicImage, ModifiedFileInfo))
 selectFunction (img, mfi) =  do
   putStrLn "Please select a function: \n\
@@ -97,6 +104,8 @@ selectFunction (img, mfi) =  do
     modifiedImage <- function $ fromImageToRepa img
     return (fromRepaToImage modifiedImage, mfi)
 
+-- |
+-- Save image
 writer :: (DynamicImage, ModifiedFileInfo) -> IO()
 writer (image, info) = do
                     let path = dir info ++"/"++ outName info ++ "." ++ outType info
@@ -110,6 +119,7 @@ writer (image, info) = do
 
                     putStrLn ("Image written at: "++ path)
 
-
+-- |
+-- Do user input stuff
 greeter :: IO()
 greeter = inputFile >>= selectFunction >>= writer
