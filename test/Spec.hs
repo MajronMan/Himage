@@ -31,8 +31,18 @@ where
 
 
   testerCircle :: Int ->Int ->Double ->Int  -> Int -> Bool
-  testerCircle a b c d e  =  and [(norm figure point == 0), (center figure  == point)]
+  testerCircle a b c d e  =  (norm figure point == 0) == (center figure  == point)
     where figure = (Circle (Point a b) c )
+          point = (Point d e)
+
+  testerSquare :: Int ->Int ->Double ->Int  -> Int -> Bool
+  testerSquare a b c d e  =  (norm figure point == 0) == (center figure  == point)
+    where figure = (Square (Point a b) c )
+          point = (Point d e)
+
+  testerDiamond :: Int ->Int ->Double ->Int  -> Int -> Bool
+  testerDiamond a b c d e  =  (norm figure point == 0) == (center figure  == point)
+    where figure = (Diamond (Point a b) c )
           point = (Point d e)
 
   --instance Arbitrary Point where
@@ -44,5 +54,9 @@ where
   main :: IO ()
   main = hspec $ do
     describe "|p-q| = 0 <=> p=q" $ do
-      it "bum" . property $
+      it "test for circles" . property $
         testerCircle
+      it "test for squares" . property $
+        testerSquare
+      it "test for diamonds" . property $
+        testerDiamond
