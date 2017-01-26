@@ -49,7 +49,7 @@ getNeighbours' x y width matrix (Z :. w :. h) =
     cw = min (w+x) (mw-1)
     ch = min (h+y) (mh-1)
 -- |
--- Returns neighbours of given pixel 
+-- Returns neighbours of given pixel
 getNeighbours :: Int -> Array D DIM2 RGBA8 -> DIM2 -> [RGBA8]
 getNeighbours 0 _ _ = []
 getNeighbours n matrix shape = getNeighbours' n1 n1 n1 matrix shape where
@@ -131,9 +131,13 @@ setAlpha newAlpha matrix = Repa.map
   (\(r, g, b, _) -> (r,g,b,newAlpha) )
   matrix
 
+-- |
+-- Convert all of the colors to corresponding shades of gray
 desaturationP :: Array D DIM2 RGBA8 -> IO(Array U DIM2 RGBA8)
 desaturationP matrix =  computeP $ Repa.traverse matrix id luminosity
 
+-- |
+-- Desaturates one pixel
 luminosity :: (DIM2 -> RGBA8) -> DIM2 -> RGBA8
 luminosity f (Z :. i :. j) = (x,x,x,alpha)
   where
@@ -162,19 +166,28 @@ extractColor color matrix
 --------------------------------------------------------------------------------
 ------------------------------równoległe----------------------------------------
 --------------------------------------------------------------------------------
-
+-- |
+-- Applies Stencil (using computeP to evaluate)
 processP :: Filter -> Array U DIM2 Double -> IO(Array U DIM2 Double)
 processP f matrix = computeP (mapStencil2 (BoundConst 0) f matrix )
 
+-- |
+-- Changes type of Array content from Pixel8 to Double (using computeP to evaluate)
 toDoubleP :: Array D DIM2 Pixel8 -> IO(Array U DIM2 Double)
 toDoubleP = computeP . Repa.map (\x -> fromIntegral (fromIntegral x :: Int))
 
+-- |
+-- Changes type of Array content from Double to Pixel8 (using computeP to evaluate)
 fromDoubleP :: Array U DIM2 Double -> IO(Array U DIM2 Pixel8)
 fromDoubleP = computeP . Repa.map (\x -> fromIntegral (truncate x :: Int))
 
+-- |
+-- Divide Arrays content by sum of stencil cells (using computeP to evaluate)
 normalizeP :: Double -> Array U DIM2 Double -> IO(Array U DIM2 Double)
 normalizeP x matrix = computeP (Repa.map (/x) matrix)
 
+-- |
+-- Applies given filter to given image (in Array D type) (in parallel)
 applyFilterP :: Filter -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
 applyFilterP f matrix =  do
                         let (rArray, gArray, bArray, alphaArray) = unzip4 matrix
@@ -184,7 +197,8 @@ applyFilterP f matrix =  do
                                             fromDoubleP)
                                             [rArray, gArray, bArray]
                         return (zip4 (delay r) (delay g) (delay b) alphaArray)
-
+-- |
+-- Applies given filter to given image (in Array D type) nth times (in parallel)
 applyForP :: Int -> Filter -> Array D DIM2 RGBA8 -> IO(Array D DIM2 RGBA8)
 applyForP 0 _ matrix = return( matrix )
 applyForP n f matrix =  do
@@ -195,15 +209,23 @@ applyForP n f matrix =  do
 --------------------------------------------------------------------------------
 ---------------------------nierównoległe----------------------------------------
 --------------------------------------------------------------------------------
+-- |
+-- Changes type of Array content from Double to Pixel8 (using computeS to evaluate)
 toDouble :: Array D DIM2 Pixel8 -> Array D DIM2 Double
 toDouble = Repa.map (\x -> fromIntegral (fromIntegral x :: Int))
 
+-- |
+-- Changes type of Array content from Double to Pixel8 (using computeS to evaluate)
 fromDouble :: Array D DIM2 Double -> Array D DIM2 Pixel8
 fromDouble = Repa.map (\x -> fromIntegral (truncate x :: Int))
 
+-- |
+-- Divide Arrays content by sum of stencil cells (using computeS to evaluate)
 normalize :: Double -> Array D DIM2 Double -> Array D DIM2 Double
 normalize x =  Repa.map (/x)
 
+-- |
+-- Applies given filter to given image (in Array D type)
 applyFilter :: Filter -> Array D DIM2 RGBA8 ->  Array D DIM2 RGBA8
 applyFilter f matrix = zip4 rArray' gArray' bArray' alphaArray
   where [rArray', gArray', bArray'] =
@@ -216,17 +238,19 @@ applyFilter f matrix = zip4 rArray' gArray' bArray' alphaArray
           [rArray, gArray, bArray]
         (rArray, gArray, bArray, alphaArray) = unzip4 matrix
 
+-- |
+-- Applies given filter to given image (in Array D type) nth times
 applyFor :: Int -> Filter -> Array D DIM2 RGBA8 -> Array D DIM2 RGBA8
 applyFor 0 _ matrix = matrix
 applyFor n f matrix =  applyFor (n-1) f . applyFilter f $ matrix
 
--- | 
+-- |
 -- Like zipWith, but for pixels
 zipWithRGBA8 :: RGBA8 -> RGBA8 -> (Pixel8 -> Pixel8 -> Pixel8) -> RGBA8
 zipWithRGBA8 (r1, g1, b1, a1) (r2, g2, b2, a2) f = (f r1 r2, f g1 g2, f b1 b2, f a1 a2)
 
 -- |
--- Calculate sum of two pixels using "overlay" method 
+-- Calculate sum of two pixels using "overlay" method
 overlayPixel :: Pixel8 -> Pixel8 -> Pixel8
 overlayPixel p1 p2
   | a < 0.5 = round (2*a*b*255)  :: Pixel8

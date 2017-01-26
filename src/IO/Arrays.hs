@@ -34,7 +34,6 @@ unzip4 matrix = (m1, m2, m3, m4)
           (extent matrix)
           (\(Z:. w:. h) -> f (matrix!(Z:. w:. h)))
 
-
 fromImage :: (Pixel a) => Image a -> (a -> RGBA8) -> Array D DIM2 RGBA8
 fromImage image f =
   fromFunction
@@ -49,6 +48,8 @@ fromImage image f =
 fromImageToRepa :: DynamicImage -> Array D DIM2 RGBA8
 fromImageToRepa image  = fromImage (convertRGBA8 image) fromRGBA8
 
+-- |
+-- Convert an Image from REPA array representation to DynamicImage from Juicy Pixels
 fromRepaToImage :: Array D DIM2 RGBA8-> DynamicImage
 fromRepaToImage matrix =
   ImageRGBA8 (

@@ -48,6 +48,8 @@ invert =
               0 0 1
               0 1 0 |]
 
+-- |
+-- Calculate sum of stencils cells
 sumStencilToNormalize :: Filter -> Double
 sumStencilToNormalize f = if result /= 0
                           then result
